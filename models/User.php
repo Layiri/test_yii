@@ -2,8 +2,27 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use yii\base\NotSupportedException;
+use yii\db\ActiveRecord;
+
+/**
+ * This is the model class for table "users".
+ *
+ * @property int $id
+ * @property string $first_name
+ * @property string $last_name
+ * @property string|null $email
+ * @property string $password
+ * @property string|null $user_ip
+ * @property string|null $last_user_ip
+ * @property int $last_login
+ * @property int|null $birthday
+ * @property string|null $authKey
+ * @property string|null $accessToken
+ */
+class User extends ActiveRecord implements \yii\web\IdentityInterface
 {
+    /*
     public $id;
     public $username;
     public $password;
@@ -26,14 +45,58 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
             'accessToken' => '101-token',
         ],
     ];
+    */
 
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return '{{%users}}';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['first_name', 'last_name', 'password', 'last_login'], 'required'],
+            [['email'], 'email'],
+            [['birthday'], 'safe'],
+            [['password'], 'string', 'min' => 6],
+
+            [['last_login', 'birthday'], 'integer'],
+            [['first_name', 'last_name', 'email', 'user_ip', 'last_user_ip', 'authKey', 'accessToken'], 'string', 'max' => 255],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'first_name' => 'First Name',
+            'last_name' => 'Last Name',
+            'email' => 'Email',
+            'password' => 'Password',
+            'user_ip' => 'User Ip',
+            'last_user_ip' => 'Last User Ip',
+            'last_login' => 'Last Login',
+            'birthday' => 'Birthday',
+            'authKey' => 'Auth Key',
+            'accessToken' => 'Access Token',
+        ];
+    }
 
     /**
      * {@inheritdoc}
      */
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne(['id' => $id]);
     }
 
     /**
@@ -41,30 +104,18 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
     }
 
     /**
-     * Finds user by username
+     * Finds user by email
      *
-     * @param string $username
+     * @param string $email
      * @return static|null
      */
-    public static function findByUsername($username)
+    public static function findByEmail($email)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(['email' => $email]);
     }
 
     /**
@@ -72,7 +123,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function getId()
     {
-        return $this->id;
+        return $this->getPrimaryKey();
     }
 
     /**
@@ -88,7 +139,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        throw new NotSupportedException('"validateAuthKey" is not implemented.');
     }
 
     /**
@@ -99,6 +150,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        return \Yii::$app->security->validatePassword($password, $this->password);
+
     }
 }
