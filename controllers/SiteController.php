@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\search\ArticlesSearch;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -61,7 +62,11 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $searchModel = new ArticlesSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+
+        return $this->render('index', compact('searchModel','dataProvider'));
     }
 
     /**
@@ -81,9 +86,7 @@ class SiteController extends Controller
         }
 
         $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
-        ]);
+        return $this->render('login', compact('model'));
     }
 
     /**
@@ -111,9 +114,7 @@ class SiteController extends Controller
 
             return $this->refresh();
         }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
+        return $this->render('contact', compact('model'));
     }
 
     /**

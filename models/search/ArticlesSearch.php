@@ -17,8 +17,8 @@ class ArticlesSearch extends Articles
     public function rules()
     {
         return [
-            [['id', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
-            [['title', 'tags', 'content'], 'safe'],
+            [['id'], 'integer'],
+            [['title', 'tags', 'content','created_at', 'updated_at'], 'safe'],
         ];
     }
 
@@ -59,11 +59,12 @@ class ArticlesSearch extends Articles
         // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
-            'created_at' => $this->created_at,
             'created_by' => $this->created_by,
-            'updated_at' => $this->updated_at,
             'updated_by' => $this->updated_by,
         ]);
+
+        $query->andFilterWhere(['like', "FROM_UNIXTIME(`created_at`, '%d-%m-%Y %H:%i:%s')", $this->created_at]);
+        $query->andFilterWhere(['like', "FROM_UNIXTIME(`updated_at`, '%d-%m-%Y %H:%i:%s')", $this->updated_at]);
 
         $query->andFilterWhere(['like', 'title', $this->title])
             ->andFilterWhere(['like', 'tags', $this->tags])

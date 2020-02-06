@@ -2,10 +2,10 @@
 
 namespace app\controllers;
 
+use app\behaviors\AccessFilter;
 use Yii;
 use app\models\Articles;
 use app\models\search\ArticlesSearch;
-use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -21,26 +21,9 @@ class ArticlesController extends Controller
     public function behaviors()
     {
         return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'only' => ['update, create, delete'],
-                'rules' => [
-                    [
-                        'actions' => ['update'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                    [
-                        'actions' => ['create'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                    [
-                        'actions' => ['delete'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
+            'access-filter' => [
+                'class' => AccessFilter::className(),
+                '_enabledActions' => ['index','view', 'create', 'update', 'delete'],
             ],
 
             'verbs' => [
@@ -51,6 +34,7 @@ class ArticlesController extends Controller
             ],
         ];
     }
+
     /**
      * {@inheritdoc}
      */
@@ -59,10 +43,6 @@ class ArticlesController extends Controller
         return [
             'error' => [
                 'class' => 'yii\web\ErrorAction',
-            ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
         ];
     }
@@ -76,10 +56,7 @@ class ArticlesController extends Controller
         $searchModel = new ArticlesSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        return $this->render('index', compact('searchModel', 'dataProvider'));
     }
 
     /**
@@ -90,9 +67,8 @@ class ArticlesController extends Controller
      */
     public function actionView($id)
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
+        $model = $this->findModel($id);
+        return $this->render('view', compact('model'));
     }
 
     /**
@@ -108,9 +84,7 @@ class ArticlesController extends Controller
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->render('create', compact('model'));
     }
 
     /**
@@ -128,9 +102,7 @@ class ArticlesController extends Controller
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', compact('model'));
     }
 
     /**
@@ -159,7 +131,6 @@ class ArticlesController extends Controller
         if (($model = Articles::findOne($id)) !== null) {
             return $model;
         }
-
         throw new NotFoundHttpException('The requested page does not exist.');
     }
 }
